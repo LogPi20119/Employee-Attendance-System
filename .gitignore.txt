@@ -1,0 +1,11 @@
+# Không đẩy môi trường ảo
+venv/
+.venv/
+
+# Không đẩy file cấu hình nhạy cảm (Chứa mật khẩu Database)
+.env
+
+# Không đẩy file rác của Python và VS Code
+__pycache__/
+.vscode/
+*.pyc

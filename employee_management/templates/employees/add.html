@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+<h4 class="mb-4">Thêm nhân viên mới</h4>
+<div class="card p-4" style="max-width:560px">
+  <form method="POST">
+    <div class="mb-3">
+      <label class="form-label">Họ</label>
+      <input type="text" name="first_name" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Tên</label>
+      <input type="text" name="last_name" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Email</label>
+      <input type="email" name="email" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Ngày vào làm</label>
+      <input type="date" name="hire_date" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Chức vụ</label>
+      <input type="text" name="position" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Phòng ban</label>
+      <select name="dept_id" class="form-select" required>
+        {% for d in departments %}
+          <option value="{{ d.dept_id }}">{{ d.dept_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary w-100">Lưu nhân viên</button>
+    <a href="/employees" class="btn btn-outline-secondary w-100 mt-2">Hủy</a>
+  </form>
+</div>
+{% endblock %}
