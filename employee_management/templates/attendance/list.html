@@ -1,18 +1,72 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <h4>Chấm công</h4>
+  <h4>Attendance</h4>
   <form class="d-flex gap-2" method="GET">
     <input type="date" name="date" class="form-control"
            value="{{ selected_date }}">
     <button class="btn btn-outline-primary">Lọc</button>
   </form>
 </div>
+
+<!-- Form check-in nhanh -->
+<div class="card mb-3 p-3">
+  <form method="POST" action="/attendance/checkin" class="row g-2 align-items-end">
+    <div class="col-md-4">
+      <label class="form-label fw-semibold">Employee</label>
+      <select name="employee_id" class="form-select" required>
+        <option value="">-- Select employee --</option>
+        {% for e in employees %}
+          <option value="{{ e.employee_id }}">
+            {{ e.first_name }} {{ e.last_name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label fw-semibold">Status</label>
+      <select name="status" class="form-select">
+        <option value="auto">Auto (by time)</option>
+        <option value="Present">Present</option>
+        <option value="Late">Late</option>
+        <option value="Absent">Absent</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label fw-semibold">Remarks</label>
+      <input type="text" name="remarks" class="form-control" placeholder="Optional">
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-success w-100">Check-in</button>
+    </div>
+  </form>
+  <!-- Thêm divider -->
+  <hr class="my-3">
+
+  <!-- Form check-out -->
+  <form method="POST" action="/attendance/checkout" class="row g-2 align-items-end">
+    <div class="col-md-5">
+      <label class="form-label fw-semibold">Check-out Employee</label>
+      <select name="employee_id" class="form-select" required>
+        <option value="">-- Select employee --</option>
+        {% for e in employees %}
+          <option value="{{ e.employee_id }}">
+            {{ e.first_name }} {{ e.last_name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-warning w-100">Check-out</button>
+    </div>
+  </form>
+</div>
+
 <table class="table table-hover table-bordered bg-white">
   <thead class="table-primary">
     <tr>
-      <th>Họ tên</th><th>Phòng ban</th>
-      <th>Check-in</th><th>Check-out</th><th>Trạng thái</th><th>Ghi chú</th>
+      <th>Full Name</th><th>Department</th>
+      <th>Check-in</th><th>Check-out</th><th>Status</th><th>Remarks</th>
     </tr>
   </thead>
   <tbody>

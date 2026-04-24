@@ -18,8 +18,48 @@ def list_leave():
         ORDER BY FIELD(lr.status,'Pending','Approved','Rejected'), lr.start_date
     """)
     requests = cur.fetchall()
+    
+    # Lấy danh sách nhân viên cho dropdown
+    cur.execute("""
+        SELECT employee_id, first_name, last_name
+        FROM EMPLOYEE WHERE is_active = 1 ORDER BY first_name
+    """)
+    employees = cur.fetchall()
+
+    # Lấy danh sách loại phép cho dropdown
+    cur.execute("SELECT type_id, type_name FROM LEAVE_TYPE")
+    leave_types = cur.fetchall()
+    
     cur.close(); db.close()
-    return render_template('leave/list.html', requests=requests)
+    return render_template('leave/list.html', requests=requests, employees=employees, leave_types=leave_types)
+
+# Thêm route mới xử lý submit đơn
+@leave_bp.route('/request', methods=['POST'])
+def submit_request():
+    db  = get_db()
+    cur = db.cursor()
+
+    emp_id     = request.form['employee_id']
+    leave_type = request.form['leave_type']
+    start_date = request.form['start_date']
+    end_date   = request.form['end_date']
+    reason     = request.form.get('reason', '')
+
+    # Validation: end_date không được trước start_date
+    if end_date < start_date:
+        flash('End date cannot be before start date.', 'danger')
+        return redirect(url_for('leave.list_leave'))
+
+    cur.execute("""
+        INSERT INTO LEAVE_REQUEST
+          (employee_id, leave_type, start_date, end_date, status, reason)
+        VALUES (%s, %s, %s, %s, 'Pending', %s)
+    """, (emp_id, leave_type, start_date, end_date, reason))
+
+    db.commit()
+    cur.close(); db.close()
+    flash('Leave request submitted successfully!', 'success')
+    return redirect(url_for('leave.list_leave'))
 
 @leave_bp.route('/approve/<int:leave_id>')
 def approve(leave_id):

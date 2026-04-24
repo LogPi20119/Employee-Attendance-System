@@ -12,7 +12,7 @@ def list_employees():
                e.email, e.position, e.is_active, d.dept_name
         FROM EMPLOYEE e
         LEFT JOIN DEPARTMENT d ON e.dept_id = d.dept_id
-        ORDER BY d.dept_name, e.last_name
+        ORDER BY e.employee_id ASC
     """)
     employees = cur.fetchall()
     cur.close(); db.close()
@@ -36,7 +36,7 @@ def add_employee():
             request.form['dept_id']
         ))
         db.commit()
-        flash('Thêm nhân viên thành công!', 'success')
+        flash('Employee added successfully!', 'success')
         cur.close(); db.close()
         return redirect(url_for('employees.list_employees'))
     cur.execute("SELECT dept_id, dept_name FROM DEPARTMENT")
@@ -51,5 +51,5 @@ def delete_employee(emp_id):
     cur.execute("UPDATE EMPLOYEE SET is_active=0 WHERE employee_id=%s", (emp_id,))
     db.commit()
     cur.close(); db.close()
-    flash('Đã vô hiệu hóa nhân viên.', 'warning')
+    flash('Employee disabled successfully!', 'warning')
     return redirect(url_for('employees.list_employees'))

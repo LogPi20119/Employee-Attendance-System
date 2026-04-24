@@ -1,12 +1,53 @@
 {% extends 'base.html' %}
 {% block content %}
-<h4 class="mb-4">Quản lý nghỉ phép</h4>
+<h4 class="mb-4">Leave Management</h4>
+
+<!-- Form tạo đơn phép mới -->
+<div class="card mb-3 p-3">
+  <form method="POST" action="/leave/request" class="row g-2 align-items-end">
+    <div class="col-md-3">
+      <label class="form-label fw-semibold">Employee</label>
+      <select name="employee_id" class="form-select" required>
+        <option value="">-- Select employee --</option>
+        {% for e in employees %}
+          <option value="{{ e.employee_id }}">
+            {{ e.first_name }} {{ e.last_name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label fw-semibold">Leave Type</label>
+      <select name="leave_type" class="form-select" required>
+        {% for t in leave_types %}
+          <option value="{{ t.type_id }}">{{ t.type_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label fw-semibold">Start Date</label>
+      <input type="date" name="start_date" class="form-control" required>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label fw-semibold">End Date</label>
+      <input type="date" name="end_date" class="form-control" required>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label fw-semibold">Reason</label>
+      <input type="text" name="reason" class="form-control" placeholder="Optional">
+    </div>
+    <div class="col-md-1">
+      <button type="submit" class="btn btn-primary w-100">Submit</button>
+    </div>
+  </form>
+</div>
+
 <table class="table table-hover table-bordered bg-white">
   <thead class="table-primary">
     <tr>
-      <th>Nhân viên</th><th>Loại phép</th>
-      <th>Từ ngày</th><th>Đến ngày</th>
-      <th>Số ngày</th><th>Lý do</th><th>Trạng thái</th><th></th>
+      <th>Employee</th><th>Leave Type</th>
+      <th>From Date</th><th>To Date</th>
+      <th>Days</th><th>Reason</th><th>Status</th><th></th>
     </tr>
   </thead>
   <tbody>
@@ -29,8 +70,8 @@
       </td>
       <td>
         {% if r.status == 'Pending' %}
-          <a href="/leave/approve/{{ r.leave_id }}" class="btn btn-sm btn-success">Duyệt</a>
-          <a href="/leave/reject/{{ r.leave_id }}"  class="btn btn-sm btn-danger">Từ chối</a>
+          <a href="/leave/approve/{{ r.leave_id }}" class="btn btn-sm btn-success">Approve</a>
+          <a href="/leave/reject/{{ r.leave_id }}"  class="btn btn-sm btn-danger">Reject</a>
         {% endif %}
       </td>
     </tr>
