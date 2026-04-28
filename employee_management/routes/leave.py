@@ -1,9 +1,11 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from config import get_db
+from flask_login import login_required
 
 leave_bp = Blueprint('leave', __name__)
 
 @leave_bp.route('/')
+@login_required
 def list_leave():
     db  = get_db()
     cur = db.cursor(dictionary=True)
@@ -35,6 +37,7 @@ def list_leave():
 
 # Thêm route mới xử lý submit đơn
 @leave_bp.route('/request', methods=['POST'])
+@login_required
 def submit_request():
     db  = get_db()
     cur = db.cursor()
@@ -62,6 +65,7 @@ def submit_request():
     return redirect(url_for('leave.list_leave'))
 
 @leave_bp.route('/approve/<int:leave_id>')
+@login_required
 def approve(leave_id):
     db  = get_db()
     cur = db.cursor()
@@ -72,6 +76,7 @@ def approve(leave_id):
     return redirect(url_for('leave.list_leave'))
 
 @leave_bp.route('/reject/<int:leave_id>')
+@login_required
 def reject(leave_id):
     db  = get_db()
     cur = db.cursor()

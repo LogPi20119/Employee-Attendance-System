@@ -1,10 +1,12 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from config import get_db
 from datetime import date
+from flask_login import login_required
 
 attendance_bp = Blueprint('attendance', __name__)
 
 @attendance_bp.route('/')
+@login_required
 def list_attendance():
     db  = get_db()
     cur = db.cursor(dictionary=True)
@@ -33,6 +35,7 @@ def list_attendance():
                            records=records, selected_date=selected_date, employees=employees)
 
 @attendance_bp.route('/checkin', methods=['POST'])
+@login_required
 def checkin():
     db  = get_db()
     cur = db.cursor()
@@ -62,6 +65,7 @@ def checkin():
     return redirect(url_for('attendance.list_attendance'))
 
 @attendance_bp.route('/checkout', methods=['POST'])
+@login_required
 def checkout():
     db  = get_db()
     cur = db.cursor()

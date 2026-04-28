@@ -1,9 +1,11 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from config import get_db
+from flask_login import login_required
 
 employees_bp = Blueprint('employees', __name__)
 
 @employees_bp.route('/')
+@login_required
 def list_employees():
     db  = get_db()
     cur = db.cursor(dictionary=True)
@@ -19,6 +21,7 @@ def list_employees():
     return render_template('employees/list.html', employees=employees)
 
 @employees_bp.route('/add', methods=['GET', 'POST'])
+@login_required
 def add_employee():
     db  = get_db()
     cur = db.cursor(dictionary=True)
@@ -45,6 +48,7 @@ def add_employee():
     return render_template('employees/add.html', departments=departments)
 
 @employees_bp.route('/delete/<int:emp_id>')
+@login_required
 def delete_employee(emp_id):
     db  = get_db()
     cur = db.cursor()
