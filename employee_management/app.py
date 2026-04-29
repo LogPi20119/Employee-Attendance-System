@@ -52,20 +52,30 @@ def dashboard():
     cur = db.cursor(dictionary=True)
     cur.execute("SELECT COUNT(*) AS total FROM EMPLOYEE WHERE is_active=1")
     total_emp = cur.fetchone()['total']
+    
     cur.execute("""
-        SELECT COUNT(*) AS total FROM ATTENDANCE
-        WHERE attendance_date=CURDATE() AND status='Present'
+        SELECT
+            COUNT(*) AS total,
+            SUM(CASE WHEN status='Present' THEN 1 ELSE 0 END) AS on_time,
+            SUM(CASE WHEN status='Late'    THEN 1 ELSE 0 END) AS late
+        FROM ATTENDANCE
+        WHERE attendance_date = CURDATE()
+            AND status IN ('Present', 'Late')
     """)
-    present_today = cur.fetchone()['total']
+    row = cur.fetchone()
+    present_today = row['total']
+    on_time_today = row['on_time']
+    late_today     = row['late']
+    
     cur.execute("SELECT COUNT(*) AS total FROM LEAVE_REQUEST WHERE status='Pending'")
     pending_leave = cur.fetchone()['total']
     cur.close(); db.close()
     return render_template('dashboard.html',
         total_emp=total_emp,
         present_today=present_today,
+        on_time_today=on_time_today,
+        late_today=late_today,
         pending_leave=pending_leave)
 
 if __name__ == '__main__':
-    import os
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', debug=False, port=port)
+    app.run(host='0.0.0.0', debug=True, port=5000)

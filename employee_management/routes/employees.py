@@ -14,6 +14,7 @@ def list_employees():
                e.email, e.position, e.is_active, d.dept_name
         FROM EMPLOYEE e
         LEFT JOIN DEPARTMENT d ON e.dept_id = d.dept_id
+        WHERE e.is_active = 1
         ORDER BY e.employee_id ASC
     """)
     employees = cur.fetchall()

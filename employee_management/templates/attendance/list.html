@@ -3,65 +3,92 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h4>Attendance</h4>
   <form class="d-flex gap-2" method="GET">
-    <input type="date" name="date" class="form-control"
-           value="{{ selected_date }}">
+    <input type="date" name="date" class="form-control" value="{{ selected_date }}">
     <button class="btn btn-outline-primary">Filter</button>
   </form>
 </div>
 
-<!-- Form check-in nhanh -->
 <div class="card mb-3 p-3">
-  <form method="POST" action="/attendance/checkin" class="row g-2 align-items-end">
-    <div class="col-md-4">
+  {% if is_weekend %}
+  <div class="alert alert-secondary text-center fw-semibold mb-3">
+    🏖️ Today is a weekend — no attendance required.
+  </div>
+  {% else %}
+
+  <!-- Real-time clock -->
+  <div class="d-flex align-items-center gap-3 mb-3">
+    <span class="fw-semibold">🕐 Current time: <span id="realtime-clock" class="text-primary fs-5"></span></span>
+    <span id="late-warning" class="badge bg-danger d-none fs-6">⚠️ Past 08:30 — You are late!</span>
+  </div>
+
+  <!-- Check-in form -->
+  <form method="POST" action="/attendance/checkin" class="row g-2 align-items-end" id="checkin-form">
+    <div class="col-md-5">
       <label class="form-label fw-semibold">Employee</label>
       <select name="employee_id" class="form-select" required>
         <option value="">-- Select employee --</option>
         {% for e in employees %}
-          <option value="{{ e.employee_id }}">
+          <option value="{{ e.employee_id }}"
+            {% if e.employee_id in checked_in_today %}disabled{% endif %}>
             {{ e.first_name }} {{ e.last_name }}
+            {% if e.employee_id in checked_in_today %}(checked in){% endif %}
           </option>
         {% endfor %}
       </select>
     </div>
-    <div class="col-md-3">
-      <label class="form-label fw-semibold">Status</label>
-      <select name="status" class="form-select">
-        <option value="auto">Auto (by time)</option>
-        <option value="Present">Present</option>
-        <option value="Late">Late</option>
-        <option value="Absent">Absent</option>
-      </select>
+
+    <!-- Remarks/Late reason — label & placeholder change based on time -->
+    <div class="col-md-5">
+      <label class="form-label fw-semibold" id="remarks-label">Remarks</label>
+      <input type="text" name="remarks" id="remarks-input"
+             class="form-control" placeholder="Optional">
     </div>
-    <div class="col-md-3">
-      <label class="form-label fw-semibold">Remarks</label>
-      <input type="text" name="remarks" class="form-control" placeholder="Optional">
-    </div>
+
     <div class="col-md-2">
       <button type="submit" class="btn btn-success w-100">Check-in</button>
     </div>
   </form>
-  <!-- Thêm divider -->
+
   <hr class="my-3">
 
-  <!-- Form check-out -->
-  <form method="POST" action="/attendance/checkout" class="row g-2 align-items-end">
+  <!-- Check-out form -->
+  <form method="POST" action="/attendance/checkout" class="row g-2 align-items-end" id="checkout-form">
     <div class="col-md-5">
       <label class="form-label fw-semibold">Check-out Employee</label>
       <select name="employee_id" class="form-select" required>
         <option value="">-- Select employee --</option>
         {% for e in employees %}
-          <option value="{{ e.employee_id }}">
-            {{ e.first_name }} {{ e.last_name }}
-          </option>
+          <option value="{{ e.employee_id }}">{{ e.first_name }} {{ e.last_name }}</option>
         {% endfor %}
       </select>
     </div>
+
+    <!-- Early leave reason — hidden until before 17:30 -->
+    <div class="col-md-5 d-none" id="early-reason-row">
+      <label class="form-label fw-semibold text-warning">⚠️ Early leave reason</label>
+      <input type="text" name="early_reason" id="early-reason-input"
+             class="form-control" placeholder="Reason for leaving before 17:30...">
+    </div>
+
     <div class="col-md-2">
       <button type="submit" class="btn btn-warning w-100">Check-out</button>
     </div>
   </form>
+  {% endif %}{# end if not weekend #}
+
+  <!-- Mark Absent button — only show after 17:30 on weekdays -->
+  {% if not is_weekend %}
+  <hr class="my-3">
+  <form method="POST" action="/attendance/mark-absent"
+      onsubmit="return confirm('Mark all employees who have not checked in today as Absent?')">
+    <button type="submit" class="btn btn-outline-danger btn-sm">
+        🚫 Mark Absent (employees not checked in today)
+    </button>
+  </form>
+  {% endif %}
 </div>
 
+<!-- Attendance table -->
 <table class="table table-hover table-bordered bg-white">
   <thead class="table-primary">
     <tr>
@@ -89,8 +116,70 @@
     </tr>
     {% endfor %}
     {% if not records %}
-    <tr><td colspan="6" class="text-center text-muted">Không có dữ liệu</td></tr>
+    <tr><td colspan="6" class="text-center text-muted">No records found</td></tr>
     {% endif %}
   </tbody>
 </table>
+
+<script>
+  const LATE_H = 8, LATE_M = 30;
+  const EARLY_H = 17, EARLY_M = 30;
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  function updateUI() {
+    const now = new Date();
+    document.getElementById('realtime-clock').textContent =
+      `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
+    const isLate = now.getHours() > LATE_H ||
+                   (now.getHours() === LATE_H && now.getMinutes() >= LATE_M);
+
+    const isEarly = now.getHours() < EARLY_H ||
+                    (now.getHours() === EARLY_H && now.getMinutes() < EARLY_M);
+
+    // Check-in: toggle warning badge + change label/placeholder
+    document.getElementById('late-warning').classList.toggle('d-none', !isLate);
+
+    const remarksLabel = document.getElementById('remarks-label');
+    const remarksInput = document.getElementById('remarks-input');
+    if (isLate) {
+      remarksLabel.innerHTML = '<span class="text-danger">Late Reason</span>';
+      remarksInput.placeholder = 'Required: reason for being late...';
+      remarksInput.required = true;
+    } else {
+      remarksLabel.textContent = 'Remarks';
+      remarksInput.placeholder = 'Optional';
+      remarksInput.required = false;
+    }
+
+    // Check-out: show early leave reason field if before 17:30
+    const earlyRow = document.getElementById('early-reason-row');
+    const earlyInput = document.getElementById('early-reason-input');
+    earlyRow.classList.toggle('d-none', !isEarly);
+    earlyInput.required = isEarly;
+  }
+
+  updateUI();
+  setInterval(updateUI, 1000);
+
+  // Before check-out submit: append early reason into a hidden remarks field
+  document.getElementById('checkout-form').addEventListener('submit', function(e) {
+    const earlyRow = document.getElementById('early-reason-row');
+    if (!earlyRow.classList.contains('d-none')) {
+      const reason = document.getElementById('early-reason-input').value.trim();
+      if (!reason) {
+        e.preventDefault();
+        document.getElementById('early-reason-input').focus();
+        return;
+      }
+      // Inject as hidden field so backend receives it
+      const hidden = document.createElement('input');
+      hidden.type = 'hidden';
+      hidden.name = 'remarks';
+      hidden.value = 'Early leave: ' + reason;
+      this.appendChild(hidden);
+    }
+  });
+</script>
 {% endblock %}
